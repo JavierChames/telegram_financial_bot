@@ -74,7 +74,7 @@ async def button_click(update: Update, context):
         # Retrieve the balance from the MySQL database in a non-blocking way.
         balance = await asyncio.to_thread(get_balance, account_id)
         if balance is not None:
-            type_of_account = PRIVATE if account_id == 1 else PUBLIC
+            type_of_account = PRIVATE if account_id == 2 else PUBLIC
             await context.bot.send_message(chat_id, f"The balance for  {type_of_account} Account is: {balance[1]},Last updated on: {balance[0]}")
         else:
             await context.bot.send_message(chat_id, f"Account {account_id} not found or no balance available.")
