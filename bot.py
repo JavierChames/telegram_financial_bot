@@ -8,9 +8,16 @@ from telegram.ext import (
     CallbackQueryHandler,
     filters,
 )
+from telegram import BotCommand
 
 PRIVATE = "Private"
 PUBLIC = "Public"
+
+commands = [
+    BotCommand("balance", "Check account balance"),
+    BotCommand("credit_card", "Check credit card usage"),
+    BotCommand("help", "Show help message")
+]
 from database import (
     get_balance,
     get_card_usage_current_month,
@@ -49,6 +56,16 @@ def format_table(data, title):
 
 # When sending via Telegram, wrap the table in <pre> tags for fixed-width formatting.
 # For example, in an async Telegram bot handler:
+
+async def on_startup(app: Application):
+    # Set the bot's command menu
+    commands = [
+        BotCommand("balance", "Check account balance"),
+        BotCommand("credit_card", "Check credit card usage"),
+        BotCommand("help", "Show help message")
+    ]
+    await app.bot.set_my_commands(commands)
+    print("Bot commands have been set.")
 
 
 async def start(update: Update, context):
@@ -136,10 +153,10 @@ async def button_click(update: Update, context):
             # Retrieve the balance from the MySQL database in a non-blocking way.
             balance = await asyncio.to_thread(get_balance, account_id)
             if balance is not None:
-                type_of_account = PRIVATE if account_id == 1 else PUBLIC
+                type_of_account = PRIVATE if account_id == 2 else PUBLIC
                 await context.bot.send_message(
                     chat_id,
-                    f"The balance for  {type_of_account} Account is: {balance[1]},Last updated on: {balance[0]}",
+                    f"The balance for {type_of_account} Account is: {balance[1]}\nLast updated on: {balance[0]}",
                 )
             else:
                 await context.bot.send_message(
@@ -226,10 +243,9 @@ def main():
     app.add_handler(CommandHandler("about", about_command))
     app.add_handler(CommandHandler("balance", balance_command))
     app.add_handler(CommandHandler("credit_card", credit_card_command))
-
     app.add_handler(CallbackQueryHandler(button_click))  # Handles button clicks
-
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    app.post_init = on_startup
 
     print("Bot is running...")
     app.run_polling()
